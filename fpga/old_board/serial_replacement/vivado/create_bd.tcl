@@ -1,8 +1,10 @@
-# Smart ZYNQ SL V1.2 PS/AXI platform with the row-only IMC slave.
-create_bd_design platform
+# PS7, AXI interconnect, reset, and the complete serial IMC module.
+create_bd_design system
+set ps [create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 ps7]
 
-set ps [create_bd_cell -type ip \
-    -vlnv xilinx.com:ip:processing_system7:5.5 ps7]
+# The installed PS7 catalog has no MT41K256M16TW-107 entry. RE-125 has
+# matching 4 Gb x16 geometry; 533.333 MHz is below both speed grades. This
+# setting is a bring-up candidate, not measured DDR timing validation.
 set_property -dict [list \
     CONFIG.PCW_CRYSTAL_PERIPHERAL_FREQMHZ {33.333333} \
     CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100} \
@@ -13,60 +15,69 @@ set_property -dict [list \
     CONFIG.PCW_UIPARAM_DDR_BUS_WIDTH {16 Bit} \
     CONFIG.PCW_UIPARAM_DDR_DRAM_WIDTH {16 Bits} \
     CONFIG.PCW_UIPARAM_DDR_FREQ_MHZ {533.333333} \
+    CONFIG.PCW_UART1_PERIPHERAL_ENABLE {1} \
+    CONFIG.PCW_UART1_UART1_IO {EMIO} \
 ] $ps
 
-# The schematic confirms MT41K256M16TW-107 and x16 wiring. Vivado 2025.2
-# lacks that exact part entry; RE-125 is a provisional, same-geometry preset.
-# Board trace delays and actual DDR training remain to be verified.
-make_bd_intf_pins_external [get_bd_intf_pins ps7/DDR]
-make_bd_intf_pins_external [get_bd_intf_pins ps7/FIXED_IO]
-
-set axi [create_bd_cell -type ip \
-    -vlnv xilinx.com:ip:axi_interconnect:* axi_ic]
-set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $axi
-connect_bd_intf_net [get_bd_intf_pins ps7/M_AXI_GP0] \
-    [get_bd_intf_pins axi_ic/S00_AXI]
-set imc [create_bd_cell -type module -reference imc_row_axi_wrapper imc]
-connect_bd_intf_net [get_bd_intf_pins axi_ic/M00_AXI] \
-    [get_bd_intf_pins imc/S_AXI]
-
-set reset [create_bd_cell -type ip \
-    -vlnv xilinx.com:ip:proc_sys_reset:* axi_reset]
-set locked [create_bd_cell -type ip \
-    -vlnv xilinx.com:ip:xlconstant:* clock_locked]
+set imc [create_bd_cell -type module \
+    -reference smart_zynq_sl_v12_imc imc]
+set ic [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:* axi_ic]
+set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $ic
+set rst [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:* axi_reset]
+set locked [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant:* pll_locked]
 set_property CONFIG.CONST_VAL {1} $locked
 
+make_bd_intf_pins_external [get_bd_intf_pins ps7/DDR]
+make_bd_intf_pins_external [get_bd_intf_pins ps7/FIXED_IO]
+make_bd_intf_pins_external [get_bd_intf_pins ps7/UART_1]
+
+connect_bd_intf_net [get_bd_intf_pins ps7/M_AXI_GP0] \
+    [get_bd_intf_pins axi_ic/S00_AXI]
+connect_bd_intf_net [get_bd_intf_pins axi_ic/M00_AXI] \
+    [get_bd_intf_pins imc/S_AXI]
 connect_bd_net [get_bd_pins ps7/FCLK_CLK0] \
     [get_bd_pins ps7/M_AXI_GP0_ACLK] \
-    [get_bd_pins axi_ic/ACLK] \
-    [get_bd_pins axi_ic/S00_ACLK] \
+    [get_bd_pins axi_ic/ACLK] [get_bd_pins axi_ic/S00_ACLK] \
     [get_bd_pins axi_ic/M00_ACLK] \
-    [get_bd_pins axi_reset/slowest_sync_clk] \
-    [get_bd_pins imc/s_axi_aclk]
+    [get_bd_pins axi_reset/slowest_sync_clk] [get_bd_pins imc/s_axi_aclk]
 connect_bd_net [get_bd_pins ps7/FCLK_RESET0_N] \
     [get_bd_pins axi_reset/ext_reset_in]
-connect_bd_net [get_bd_pins clock_locked/dout] \
+connect_bd_net [get_bd_pins pll_locked/dout] \
     [get_bd_pins axi_reset/dcm_locked]
 connect_bd_net [get_bd_pins axi_reset/interconnect_aresetn] \
     [get_bd_pins axi_ic/ARESETN]
 connect_bd_net [get_bd_pins axi_reset/peripheral_aresetn] \
-    [get_bd_pins axi_ic/S00_ARESETN] \
-    [get_bd_pins axi_ic/M00_ARESETN] \
+    [get_bd_pins axi_ic/S00_ARESETN] [get_bd_pins axi_ic/M00_ARESETN] \
     [get_bd_pins imc/s_axi_aresetn]
 
-foreach row_port {sr_data sr_clk sr_latch sr_oe_n} {
-    create_bd_port -dir O $row_port
-    connect_bd_net [get_bd_ports $row_port] [get_bd_pins imc/$row_port]
+set external_pins {
+    sr_data sr_clk sr_latch sr_oe_n
+    dac_mosi dac_sclk dac_cs_n dac_reset_n
+    adc_scl adc_sda ispp vp cc1 cc2 cc3
+    integrator_reset1 integrator_reset2 integrator_reset3
+    board_control timing_pulse
+}
+foreach pin $external_pins {
+    make_bd_pins_external [get_bd_pins imc/$pin]
+    set_property name $pin [get_bd_ports $pin*]
 }
 
-# Preserve the platform's reserved AXI window for the connected IMC slave.
 assign_bd_address
-set mapped_seg [get_bd_addr_segs -of_objects [get_bd_addr_spaces ps7/Data]]
+set target_seg [get_bd_addr_segs imc/S_AXI/*]
+if {[llength $target_seg] != 1} {
+    error "Expected one IMC AXI address segment, found $target_seg"
+}
+set mapped_seg [get_bd_addr_segs -of_objects [get_bd_addr_spaces ps7/Data] \
+    -filter {NAME =~ *imc*}]
 if {[llength $mapped_seg] != 1} {
-    error "Expected one IMC AXI address segment, found $mapped_seg"
+    error "Expected one mapped IMC segment, found $mapped_seg"
 }
 set_property offset 0x43C00000 $mapped_seg
 set_property range 64K $mapped_seg
 
 validate_bd_design
 save_bd_design
+puts "IMC_BASE [get_property offset $mapped_seg]"
+puts "DDR_PART [get_property CONFIG.PCW_UIPARAM_DDR_PARTNO $ps]"
+puts "DDR_GEOMETRY [get_property CONFIG.PCW_UIPARAM_DDR_DEVICE_CAPACITY $ps] [get_property CONFIG.PCW_UIPARAM_DDR_BUS_WIDTH $ps]"
+puts "FCLK_MHZ [get_property CONFIG.PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ $ps]"

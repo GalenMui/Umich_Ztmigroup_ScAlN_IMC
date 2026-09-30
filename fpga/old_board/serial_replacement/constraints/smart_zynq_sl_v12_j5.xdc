@@ -36,3 +36,46 @@
 # set_property -dict {PACKAGE_PIN F16 IOSTANDARD LVCMOS33} [get_ports {j5[31]}]
 # set_property -dict {PACKAGE_PIN G15 IOSTANDARD LVCMOS33} [get_ports {j5[32]}]
 # set_property -dict {PACKAGE_PIN G16 IOSTANDARD LVCMOS33} [get_ports {j5[33]}]
+
+# Current serial-replacement allocation. The indexed map above is the
+# authoritative V1.2 connector/package cross-reference.
+# J5[0], header 7: sr_data
+set_property -dict {PACKAGE_PIN H19 IOSTANDARD LVCMOS33} [get_ports sr_data]
+# J5[1], header 8: sr_clk
+set_property -dict {PACKAGE_PIN H20 IOSTANDARD LVCMOS33} [get_ports sr_clk]
+# J5[2], header 9: sr_latch
+set_property -dict {PACKAGE_PIN E18 IOSTANDARD LVCMOS33} [get_ports sr_latch]
+# J5[3], header 10: sr_oe_n
+set_property -dict {PACKAGE_PIN F18 IOSTANDARD LVCMOS33} [get_ports sr_oe_n]
+# J5[4], header 11: dac_mosi
+set_property -dict {PACKAGE_PIN F17 IOSTANDARD LVCMOS33} [get_ports dac_mosi]
+# J5[5], header 12: dac_sclk
+set_property -dict {PACKAGE_PIN G17 IOSTANDARD LVCMOS33} [get_ports dac_sclk]
+# J5[6], header 13: dac_cs_n
+set_property -dict {PACKAGE_PIN C17 IOSTANDARD LVCMOS33} [get_ports dac_cs_n]
+# J5[7], header 14: dac_reset_n
+set_property -dict {PACKAGE_PIN C18 IOSTANDARD LVCMOS33} [get_ports dac_reset_n]
+# J5[8], header 15: adc_scl
+set_property -dict {PACKAGE_PIN G19 IOSTANDARD LVCMOS33} [get_ports adc_scl]
+# J5[9], header 16: adc_sda
+set_property -dict {PACKAGE_PIN F19 IOSTANDARD LVCMOS33} [get_ports adc_sda]
+# J5[10], header 17: ispp
+set_property -dict {PACKAGE_PIN E20 IOSTANDARD LVCMOS33} [get_ports ispp]
+# J5[11], header 18: vp
+set_property -dict {PACKAGE_PIN E19 IOSTANDARD LVCMOS33} [get_ports vp]
+# J5[12], header 19: cc1
+set_property -dict {PACKAGE_PIN D22 IOSTANDARD LVCMOS33} [get_ports cc1]
+# J5[13], header 20: cc2
+set_property -dict {PACKAGE_PIN C22 IOSTANDARD LVCMOS33} [get_ports cc2]
+# J5[14], header 21: cc3
+set_property -dict {PACKAGE_PIN B22 IOSTANDARD LVCMOS33} [get_ports cc3]
+# J5[15], header 22: integrator_reset1
+set_property -dict {PACKAGE_PIN B21 IOSTANDARD LVCMOS33} [get_ports integrator_reset1]
+# J5[16], header 23: integrator_reset2
+set_property -dict {PACKAGE_PIN B17 IOSTANDARD LVCMOS33} [get_ports integrator_reset2]
+# J5[17], header 24: integrator_reset3
+set_property -dict {PACKAGE_PIN B16 IOSTANDARD LVCMOS33} [get_ports integrator_reset3]
+# J5[18], header 25: board_control
+set_property -dict {PACKAGE_PIN A17 IOSTANDARD LVCMOS33} [get_ports board_control]
+# J5[19], header 26: timing_pulse
+set_property -dict {PACKAGE_PIN A16 IOSTANDARD LVCMOS33} [get_ports timing_pulse]
