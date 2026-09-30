@@ -20,4 +20,5 @@ set constraint_dir [file join $target_dir constraints]
 add_files -fileset constrs_1 [list \
     [file join $constraint_dir smart_zynq_sl_v12_base.xdc] \
     [file join $constraint_dir smart_zynq_sl_v12_j5.xdc]]
+source [file join $script_dir create_bd.tcl]
 puts "PROJECT_READY [file join $build_dir $project_name $project_name.xpr]"
