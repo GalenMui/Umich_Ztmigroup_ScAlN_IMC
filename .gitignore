@@ -1,0 +1,16 @@
+# Vivado-generated state and outputs
+.Xil/
+*.jou
+*.log
+*.str
+*.xpr
+*.cache/
+*.runs/
+*.sim/
+*.gen/
+*.hw/
+*.ip_user_files/
+*.bit
+*.xsa
+fpga/**/build/
+fpga/**/build_vivado/
